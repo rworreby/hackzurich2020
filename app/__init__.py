@@ -33,4 +33,7 @@ def create_app(test_config=None):
     from . import main
     app.register_blueprint(main.bp)
 
+    from . import api
+    app.register_blueprint(api.bp)
+
     return app
