@@ -42,6 +42,5 @@ CREATE TABLE pickup (
     start_location_log REAL NOT NULL,
     start_location_lat REAL NOT NULL,
     end_location_log REAL,
-    end_location_lat REAL,
-    FOREIGN KEY (truck_id) REFERENCES truck(id)
+    end_location_lat REAL
 );
