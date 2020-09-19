@@ -22,9 +22,8 @@ def index_trucks():
 def create_trucks():
     """
     curl -X POST \
-    -F 'truck_id=1' \
     -F 'userId=321' \
-    -F 'currentLocationLon=10' \
+    -F 'currentLocationLon=9' \
     -F 'currentLocationLat=9' \
     -F 'homeLocationLon=10' \
     -F 'homeLocationLat=10' \
@@ -48,8 +47,8 @@ def create_trucks():
         "maxLoad": int(request.form['maxLoad']),
         "angle": int(request.form['angle'])
     }
-    db.child("trucks/" + str(id)).set(data)
-    return jsonify([])
+    truck = db.child("trucks/" + str(id)).set(data)
+    return jsonify(truck)
 
 
 @bp.route('/trucks/<int:id>', methods=['GET'])
@@ -97,13 +96,25 @@ def update_trucks(id):
     db.child("trucks/" + str(id)).update(data)
     return jsonify([])
 
+@bp.route('/trucks', methods=['DELETE'])
+def delete_all_trucks():
+    """
+    curl -X DELETE \
+    http://127.0.0.1:5000/api/trucks
+    """
+    db = get_firebase_db()
+    trucks = db.child("trucks").remove()
+    return jsonify(trucks)
+
 
 @bp.route('/fahrten', methods=['GET'])
 def index_fahrten():
-    db = get_db()
-    fahrten = db.execute(
-        'SELECT * FROM fahrt ORDER BY id'
-    ).fetchall()
+    """
+    curl -X GET \
+    http://127.0.0.1:5000/api/fahrten
+    """
+    db = get_firebase_db()
+    fahrten = db.child("fahrten").get().val()
     return jsonify(fahrten)
 
 
@@ -119,6 +130,7 @@ def create_fahrten():
     -F 'end_location_lat=10.256395' \
     http://127.0.0.1:5000/api/fahrten
     """
+<<<<<<< HEAD
     db = get_db()
     db.execute(
         'INSERT INTO fahrt VALUES (NULL, ?, ?, ?, ?, ?, ?)',
@@ -133,20 +145,47 @@ def create_fahrten():
     )
     db.commit()
     return
+=======
+    db = get_firebase_db()
+    fahrten = db.child("fahrten").get().val()
+    id = fahrten[-1]['id'] + 1 if fahrten else 0
+    data = {
+        "id": int(id),
+        "truck_id": request.form['truck_id'],
+        "load": request.form['load'],
+        "start_location_log": float(request.form['start_location_log']),
+        "start_location_lat": float(request.form['start_location_lat']),
+        "end_location_log": float(request.form['end_location_log']),
+        "end_location_lat": float(request.form['end_location_lat'])
+    }
+    db.child("fahrten/" + str(id)).set(data)
+    return jsonify([])
+>>>>>>> 114d1dd91b1bd67470b2a6c191ad94c9fa195913
 
 
 @bp.route('/fahrten/<int:id>', methods=['GET'])
 def show_fahrten(id):
-    db = get_db()
-    post = db.execute(
-        'SELECT * FROM fahrt ORDER BY id'
-    ).fetchone()
-    return jsonify(post)
+    """
+    curl -X GET \
+    http://127.0.0.1:5000/api/fahrten/1
+    """
+    db = get_firebase_db()
+    fahrten = db.child("fahrten").get().val()
+    for fahrt in fahrten:
+        if fahrt['id'] == id:
+            return jsonify(fahrt)
+    return jsonify([])
 
 
 @bp.route('/facilities', methods=['GET'])
 def index_facilities():
-    return jsonify([])
+    """
+    curl -X GET \
+    http://127.0.0.1:5000/api/facilities
+    """
+    db = get_firebase_db()
+    facilities = db.child("facilities").get().val()
+    return jsonify(facilities)
 
 
 #get all pick-ups
