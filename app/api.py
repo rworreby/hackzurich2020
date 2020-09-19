@@ -130,6 +130,22 @@ def create_fahrten():
     -F 'end_location_lat=10.256395' \
     http://127.0.0.1:5000/api/fahrten
     """
+<<<<<<< HEAD
+    db = get_db()
+    db.execute(
+        'INSERT INTO fahrt VALUES (NULL, ?, ?, ?, ?, ?, ?)',
+        (
+            request.form['load'],
+            request.form['truck_id'],
+            request.form['start_location_log'],
+            request.form['start_location_lat'],
+            request.form['end_location_log'],
+            request.form['end_location_lat']
+        )
+    )
+    db.commit()
+    return
+=======
     db = get_firebase_db()
     fahrten = db.child("fahrten").get().val()
     id = fahrten[-1]['id'] + 1 if fahrten else 0
@@ -144,6 +160,7 @@ def create_fahrten():
     }
     db.child("fahrten/" + str(len(fahrten))).set(data)
     return jsonify([])
+>>>>>>> 114d1dd91b1bd67470b2a6c191ad94c9fa195913
 
 
 @bp.route('/fahrten/<int:id>', methods=['GET'])
@@ -173,42 +190,57 @@ def index_facilities():
 
 #get all pick-ups
 @bp.route('/pickups', methods=['GET'])
-def index2():
-    db = get_db()
-    return jsonify(db.execute("SELECT * FROM pickup").fetchall())
+def index_pickups():
+    """
+    curl -X GET \
+    http://127.0.0.1:5000/api/pickups
+    """
+    db = get_firebase_db()
+    pickups = db.child("pickups").get().val()
+    return jsonify(pickups)
 
 
 #add a new pick-up
 @bp.route('/pickups', methods=['POST'])
-def index3():
-    error = None
-    if (request.method == 'POST'):
-            
-        db = get_db()
-
-        db.execute("INSERT INTO pickup VALUES (NULL,?,?,?,?,?,?,?)", 
-        (int(request.form['truckID']), 
-        request.form['notes'], 
-        request.form['type'],
-        float(request.form['startLat']),
-        float(request.form['startLog']),
-        float(request.form['endLog']),
-        float(request.form['endLat'] )
-        ))
-
-        db.commit()
-    
-        return jsonify ({'status' : 'success'})
-    else:
-        return jsonify({'status' : 'failed'})
+def create_pickup():
+    """
+    curl -X POST \
+    -F 'truck_id=1' \
+    -F 'userId=321' \
+    -F 'currentLocationLon=10' \
+    -F 'currentLocationLat=9' \
+    -F 'homeLocationLon=10' \
+    -F 'homeLocationLat=10' \
+    -F 'payload=concret' \
+    -F 'maxLoad=1' \
+    -F 'angle=0' \
+    http://127.0.0.1:5000/api/pickups
+    """
+    db = get_firebase_db()
+    pickups = db.child("pickups").get().val()
+    id = pickups[-1]['id'] + 1 if pickups else 0
+    data = {
+        "id": int(id),
+        "notes": request.form['notes'],
+        "type": request.form['type'],
+        "startLocationLon": float(request.form['startLocationLon']),
+        "startLocationLat": float(request.form['startLocationLat']),
+        "payload": int(request.form['payload'])
+    }
+    db.child("pickups/" + str(len(pickups))).set(data)
+    return jsonify([])
 
 
 @bp.route('/pickups/<int:id>', methods=['GET'])
-def index4(id):
-    db = get_db()
-    
-    numEntries = int(db.execute("SELECT COUNT(*) FROM pickup").fetchone()['COUNT(*)'])
-    if (id > numEntries):
-        return jsonify ({'status': 'failed'})
-    else:
-        return jsonify(db.execute("SELECT * FROM pickup WHERE id=" + str(id)).fetchall())
+def show_pickups(id):
+    """
+    curl -X GET \
+    http://127.0.0.1:5000/api/pickups/1
+    """
+    db = get_firebase_db()
+    pickups = db.child("pickups").get().val()
+    for pickup in pickups:
+        if pickup['id'] == id:
+            return jsonify([pickup])
+    return jsonify([])
+
