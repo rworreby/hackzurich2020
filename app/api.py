@@ -204,7 +204,7 @@ def create_pickup():
     id = pickups[-1]['id'] + 1 if pickups else 0
     data = {
         "id": int(id),
-        "notes": request.form['notes'],
+        "notes": request.form.get('notes'),
         "type": request.form['type'],
         "locationLog": float(request.form['longitude']),
         "locationLat": float(request.form['latitude']),
