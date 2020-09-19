@@ -47,7 +47,7 @@ def create_trucks():
         "maxLoad": int(request.form['maxLoad']),
         "angle": int(request.form['angle'])
     }
-    truck = db.child("trucks/" + str(id)).set(data)
+    truck = db.child("trucks/" + str(len(trucks))).set(data)
     return jsonify(truck)
 
 
@@ -142,7 +142,7 @@ def create_fahrten():
         "end_location_log": float(request.form['end_location_log']),
         "end_location_lat": float(request.form['end_location_lat'])
     }
-    db.child("fahrten/" + str(id)).set(data)
+    db.child("fahrten/" + str(len(fahrten))).set(data)
     return jsonify([])
 
 
