@@ -4,6 +4,7 @@ import click
 from flask import current_app, g
 from flask.cli import with_appcontext
 
+
 def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
@@ -21,11 +22,13 @@ def get_db():
 
     return g.db
 
+
 def close_db(e=None):
     db = g.pop('db', None)
 
     if db is not None:
         db.close()
+
 
 @click.command('init-db')
 @with_appcontext
@@ -38,6 +41,7 @@ def init_db_command():
 
     click.echo('Initialized the database.')
 
+
 @click.command('insert-mock-data-db')
 @with_appcontext
 def insert_mock_data():
@@ -48,6 +52,7 @@ def insert_mock_data():
         db.executescript(f.read().decode('utf8'))
 
     click.echo('Initialized the database.')
+
 
 def init_app(app):
     app.teardown_appcontext(close_db)

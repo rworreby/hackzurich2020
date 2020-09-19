@@ -15,6 +15,7 @@ def index_fahrten():
     ).fetchall()
     return jsonify(fahrten)
 
+
 @bp.route('/fahrten', methods=['POST'])
 def create_fahrten():
     """
@@ -42,6 +43,7 @@ def create_fahrten():
     db.commit()
     return
 
+
 @bp.route('/fahrten/<int:id>', methods=['GET'])
 def show_fahrten(id):
     db = get_db()
@@ -49,6 +51,7 @@ def show_fahrten(id):
         'SELECT * FROM fahrt ORDER BY id'
     ).fetchone()
     return jsonify(post)
+
 
 @bp.route('/facilities', methods=['GET'])
 def index_facilities():
