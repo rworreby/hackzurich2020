@@ -42,12 +42,12 @@ def create_trucks():
         "currentLocationLat": float(request.form['currentLocationLat']),
         "homeLocationLon": float(request.form['homeLocationLon']),
         "homeLocationLat": float(request.form['homeLocationLat']),
-        "createdAt": "2020-09-19-15-58-33", #str(datetime.datetime.now()),
+        "createdAt": str(datetime.datetime.now()),
         "payload": request.form['payload'],
         "maxLoad": int(request.form['maxLoad']),
         "angle": int(request.form['angle'])
     }
-    truck = db.child("trucks/" + str(len(trucks))).set(data)
+    truck = db.child("trucks/" + str(len(trucks) if trucks else 0)).set(data)
     return jsonify(truck)
 
 

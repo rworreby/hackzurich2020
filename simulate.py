@@ -2,6 +2,8 @@ import requests
 import json
 from app.firebase import get_firebase_db
 import time
+import numpy as np
+from numpy import linalg as LA
 
 def create_get(lat_start, long_start, lat_end, long_end,access_token = "pk.eyJ1IjoibXJmM2xpeCIsImEiOiJjazN5czZzNG0xM2h1M2twNjdydDdkYWxxIn0.erELJKvEEqZev409Z01L3g"):
     get_str = f"https://api.mapbox.com/directions/v5/mapbox/driving/{lat_start}%2C{long_start}%3B{lat_end}%2C{long_end}?alternatives=false&geometries=geojson&steps=true&access_token={access_token}"
@@ -25,66 +27,90 @@ def from_to(start_id, end_id):
     long_start = facilities[start_id]['locationLog']
     lat_end = facilities[end_id]['locationLat']
     long_end = facilities[end_id]['locationLog']
-    return mapbox_call(create_get(lat_start, long_start, lat_end, long_end))
+
+    route, duration = mapbox_call(create_get(lat_start, long_start, lat_end, long_end))
+
+    return route + [[lat_end, long_end]], duration
+
+def interpolate_route(route):
+    # TODO: do the thing...
+    step_size = 0.0001
+    interpolated_route = []
+
+    interpolated_route.append(route[0])
+    for step in route:
+        distance = LA.norm(step, 2)
+        if distance > step_size:
+            lon = step[0]
+            lat = step[1]
+            interpolated_route.append([lon, lat])
+        else:
+            interpolated_route.append(step)
+
+    return route
 
 def main():
     r = requests.delete('http://127.0.0.1:5000/api/trucks')
 
-    route, duration = from_to(1, 5)
-    print(route, len(route), duration)
+    from_tos = [
+        [1, 5],
+        # [1, 6],
+        [2, 7],
+        # [2, 8],
+        [2, 9],
+    ]
+    routes = []
+    durations = []
+    trucks = []
 
-    r = requests.post('http://127.0.0.1:5000/api/trucks', data={
-        'userId': '321',
-        'currentLocationLon': route[0][1],
-        'currentLocationLat': route[0][0],
-        'homeLocationLon': route[0][1],
-        'homeLocationLat': route[0][0],
-        'payload': 'concret',
-        'maxLoad': '1',
-        'angle': '0'
-    })
+    for (f, t) in from_tos:
+        route, duration = from_to(f, t)
+        print(route, interpolate_route(route), sep="\n*********\n")
+        print(len(route), len(interpolate_route(route)))
 
-    truck = r.json()
-    print(truck)
+        route = interpolate_route(route)
 
-    for i in range(len(route)):
-        time.sleep(0.1)
+        route = route + route[::-1]
 
-        r = requests.put('http://127.0.0.1:5000/api/trucks/'+str(truck['id']), data={
-            'userId': truck['userId'],
-            'currentLocationLon': route[i][1],
-            'currentLocationLat': route[i][0],
-            'homeLocationLon': truck['homeLocationLon'],
-            'homeLocationLat': truck['homeLocationLat'],
-            'payload': truck['payload'],
-            'maxLoad': truck['maxLoad'],
-            'angle': truck['angle']
+        r = requests.post('http://127.0.0.1:5000/api/trucks', data={
+            'userId': '321',
+            'currentLocationLon': route[0][1],
+            'currentLocationLat': route[0][0],
+            'homeLocationLon': route[0][1],
+            'homeLocationLat': route[0][0],
+            'payload': 'concret',
+            'maxLoad': '1',
+            'angle': '0'
         })
 
-    exit()
+        print(r.status_code)
 
+        truck = r.json()
+        routes.append(route)
+        durations.append(duration)
+        trucks.append(truck)
 
-    # route 0-3
-    # route, duration = from_to(0, 3)
-    # print(len(route), duration)
-    # route 0-4
-    # route, duration = from_to(0, 4)
-    # print(len(route), duration)
-    # route 1-5
-    route, duration = from_to(1, 5)
-    print(len(route), duration)
-    # route 1-6
-    route, duration = from_to(1, 6)
-    print(len(route), duration)
-    # route 2-7
-    route, duration = from_to(2, 7)
-    print(len(route), duration)
-    # route 2-8
-    route, duration = from_to(2, 8)
-    print(len(route), duration)
-    # route 2-9
-    route, duration = from_to(2, 9)
-    print(len(route), duration)
+    max_length = 0
+    for route in routes:
+        if max_length < len(route):
+            max_length = len(route)
+
+    for i in range(max_length):
+        time.sleep(0.1)
+
+        for j, truck in enumerate(trucks):
+            if i < len(routes[j]):
+                r = requests.put('http://127.0.0.1:5000/api/trucks/'+str(truck['id']), data={
+                    'userId': truck['userId'],
+                    'currentLocationLon': routes[j][i][1],
+                    'currentLocationLat': routes[j][i][0],
+                    'homeLocationLon': truck['homeLocationLon'],
+                    'homeLocationLat': truck['homeLocationLat'],
+                    'payload': truck['payload'],
+                    'maxLoad': truck['maxLoad'],
+                    'angle': truck['angle']
+                })
+
     return 0
 
 if __name__ == '__main__':
