@@ -1,8 +1,6 @@
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, redirect, render_template
 )
-from werkzeug.security import check_password_hash, generate_password_hash
-from app.db import get_db
 
 bp = Blueprint('main', __name__, url_prefix="")
 
