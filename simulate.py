@@ -5,9 +5,13 @@ import time
 import numpy as np
 from numpy import linalg as LA
 
-def create_get(lat_start, long_start, lat_end, long_end,access_token = "pk.eyJ1IjoibXJmM2xpeCIsImEiOiJjazN5czZzNG0xM2h1M2twNjdydDdkYWxxIn0.erELJKvEEqZev409Z01L3g"):
-    get_str = f"https://api.mapbox.com/directions/v5/mapbox/driving/{lat_start}%2C{long_start}%3B{lat_end}%2C{long_end}?alternatives=false&geometries=geojson&steps=true&access_token={access_token}"
-    return get_str
+
+def create_get(coords, access_token = "pk.eyJ1IjoibXJmM2xpeCIsImEiOiJjazN5czZzNG0xM2h1M2twNjdydDdkYWxxIn0.erELJKvEEqZev409Z01L3g"):
+    get_str = "https://api.mapbox.com/directions/v5/mapbox/driving/"
+    for c in coords:
+        get_str += f"{c[0]}%2C{c[1]}%3B"
+    return get_str[:-3] + f"?alternatives=false&geometries=geojson&steps=true&access_token={access_token}"
+
 
 def mapbox_call(get_str):
     res = requests.get(get_str)
@@ -20,17 +24,43 @@ def mapbox_call(get_str):
         print(res.status_code, res.reason)
         return 0
 
-def from_to(start_id, end_id):
+
+def from_to(destination_IDs):
     db = get_firebase_db()
     facilities = db.child("facilities").get().val()
-    lat_start = facilities[start_id]['locationLat']
-    long_start = facilities[start_id]['locationLog']
-    lat_end = facilities[end_id]['locationLat']
-    long_end = facilities[end_id]['locationLog']
 
-    route, duration = mapbox_call(create_get(lat_start, long_start, lat_end, long_end))
+    db = get_firebase_db()
+    pickups = db.child("pickups").get().val()
 
-    return route + [[lat_end, long_end]], duration
+    coords = []
+    payload = 0
+    for i, d_id in enumerate(destination_IDs):
+        if i == 0 or i == len(destination_IDs)-1:
+            lat = facilities[d_id]['locationLat']
+            long = facilities[d_id]['locationLog']
+            coords.append([lat, long])
+        else:
+            lat = pickups[d_id]['locationLat']
+            long = pickups[d_id]['locationLog']
+            payload += pickups[d_id]['payload']
+            coords.append([lat, long])
+    route, duration = mapbox_call(create_get(coords))
+    return route, duration, payload
+
+
+def calc_pick_ups(threshold = 0, alpha = 2):
+    pickup_ids = get_pickups() # Firebase magic happens here
+    _, base_duration, _ = from_to([1,5])
+    for pid in pickup_ids:
+        route, duration, payload = from_to([1,pid,5])
+        if 1/duration > threshold:
+            possible_pickups.append((alpha*payload/duration,pid,route,duration))
+    best_pickup_factor, best_id, route, duration = max(possible_pickups,key=lambda pp: pp[0])
+    if best_pickup_factor > threshold:
+        return best_id, route, duration
+    else:
+        return None
+
 
 def interpolate_route(route):
     # TODO: do the thing...
@@ -63,12 +93,12 @@ def main():
     durations = []
     trucks = []
 
-    for (f, t) in from_tos:
-        route, duration = from_to(f, t)
-        print(route, interpolate_route(route), sep="\n*********\n")
-        print(len(route), len(interpolate_route(route)))
+    for l in from_tos:
+        route, duration, payload = from_to(l)
+        # print(route, interpolate_route(route), sep="\n*********\n")
+        # print(len(route), len(interpolate_route(route)))
 
-        route = interpolate_route(route)
+        # route = interpolate_route(route)
 
         route = route + route[::-1]
 
