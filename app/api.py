@@ -22,7 +22,6 @@ def index_trucks():
 def create_trucks():
     """
     curl -X POST \
-    -F 'truck_id=1' \
     -F 'userId=321' \
     -F 'currentLocationLon=9' \
     -F 'currentLocationLat=9' \
@@ -48,8 +47,8 @@ def create_trucks():
         "maxLoad": int(request.form['maxLoad']),
         "angle": int(request.form['angle'])
     }
-    db.child("trucks/" + str(id)).set(data)
-    return jsonify([])
+    truck = db.child("trucks/" + str(id)).set(data)
+    return jsonify(truck)
 
 
 @bp.route('/trucks/<int:id>', methods=['GET'])
@@ -96,6 +95,16 @@ def update_trucks(id):
     }
     db.child("trucks/" + str(id)).update(data)
     return jsonify([])
+
+@bp.route('/trucks', methods=['DELETE'])
+def delete_all_trucks():
+    """
+    curl -X DELETE \
+    http://127.0.0.1:5000/api/trucks
+    """
+    db = get_firebase_db()
+    trucks = db.child("trucks").remove()
+    return jsonify(trucks)
 
 
 @bp.route('/fahrten', methods=['GET'])
