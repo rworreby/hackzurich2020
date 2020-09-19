@@ -13,17 +13,6 @@ def index():
     fahrten = db.execute(
         'SELECT * FROM fahrt ORDER BY id'
     ).fetchall()
-
-    # stuff = []
-
-    # for row in fahrten:
-    #     jkl = []
-    #     for col in row:
-    #         jkl.append(col)
-    #     stuff.append(jkl)
-
-
-    # print(stuff)
     return jsonify(fahrten)
 
 @bp.route('/fahrten', methods=['POST'])
