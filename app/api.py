@@ -8,7 +8,7 @@ bp = Blueprint('api', __name__, url_prefix="/api")
 
 
 @bp.route('/fahrten', methods=['GET'])
-def index():
+def index_fahrten():
     db = get_db()
     fahrten = db.execute(
         'SELECT * FROM fahrt ORDER BY id'
@@ -16,7 +16,7 @@ def index():
     return jsonify(fahrten)
 
 @bp.route('/fahrten', methods=['POST'])
-def create():
+def create_fahrten():
     """
     curl -X POST \
     -F 'truck_id=1' \
@@ -43,7 +43,7 @@ def create():
     return
 
 @bp.route('/fahrten/<int:id>', methods=['GET'])
-def show(id):
+def show_fahrten(id):
     db = get_db()
     post = db.execute(
         'SELECT * FROM fahrt ORDER BY id'
