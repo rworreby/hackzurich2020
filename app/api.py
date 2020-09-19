@@ -14,17 +14,17 @@ def index():
         'SELECT * FROM fahrt ORDER BY id'
     ).fetchall()
 
-    stuff = []
+    # stuff = []
 
-    for row in fahrten:
-        jkl = []
-        for col in row:
-            jkl.append(col)
-        stuff.append(jkl)
+    # for row in fahrten:
+    #     jkl = []
+    #     for col in row:
+    #         jkl.append(col)
+    #     stuff.append(jkl)
 
 
-    print(stuff)
-    return jsonify(stuff)
+    # print(stuff)
+    return jsonify(fahrten)
 
 @bp.route('/fahrten', methods=['POST'])
 def create():
@@ -59,7 +59,7 @@ def show(id):
     post = db.execute(
         'SELECT * FROM fahrt ORDER BY id'
     ).fetchone()
-    return str(id)
+    return jsonify(post)
 
 @bp.route('/facilities', methods=['GET'])
 def index_facilities():
