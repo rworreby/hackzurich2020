@@ -130,22 +130,6 @@ def create_fahrten():
     -F 'end_location_lat=10.256395' \
     http://127.0.0.1:5000/api/fahrten
     """
-<<<<<<< HEAD
-    db = get_db()
-    db.execute(
-        'INSERT INTO fahrt VALUES (NULL, ?, ?, ?, ?, ?, ?)',
-        (
-            request.form['load'],
-            request.form['truck_id'],
-            request.form['start_location_log'],
-            request.form['start_location_lat'],
-            request.form['end_location_log'],
-            request.form['end_location_lat']
-        )
-    )
-    db.commit()
-    return
-=======
     db = get_firebase_db()
     fahrten = db.child("fahrten").get().val()
     id = fahrten[-1]['id'] + 1 if fahrten else 0
@@ -160,7 +144,6 @@ def create_fahrten():
     }
     db.child("fahrten/" + str(id)).set(data)
     return jsonify([])
->>>>>>> 114d1dd91b1bd67470b2a6c191ad94c9fa195913
 
 
 @bp.route('/fahrten/<int:id>', methods=['GET'])
@@ -223,9 +206,9 @@ def create_pickup():
         "id": int(id),
         "notes": request.form['notes'],
         "type": request.form['type'],
-        "startLocationLon": float(request.form['startLocationLon']),
-        "startLocationLat": float(request.form['startLocationLat']),
-        "payload": int(request.form['payload'])
+        "locationLog": float(request.form['longitude']),
+        "locationLat": float(request.form['latitude']),
+        "payload": int(request.form['amount'])
     }
     db.child("pickups/" + str(len(pickups))).set(data)
     return jsonify([])
