@@ -9,6 +9,10 @@ bp = Blueprint('api', __name__, url_prefix="/api")
 
 @bp.route('/trucks', methods=['GET'])
 def index_trucks():
+    """
+    curl -X GET \
+    http://127.0.0.1:5000/api/trucks
+    """
     db = get_firebase_db()
     trucks = db.child("trucks").get().val()
     return jsonify(trucks)
@@ -19,7 +23,6 @@ def create_trucks():
     """
     curl -X POST \
     -F 'truck_id=1' \
-    -F 'id=0' \
     -F 'userId=321' \
     -F 'currentLocationLon=10' \
     -F 'currentLocationLat=9' \
@@ -66,33 +69,33 @@ def show_trucks(id):
 @bp.route('/trucks/<int:id>', methods=['PUT'])
 def update_trucks(id):
     """
-    curl -X POST \
+    curl -X PUT \
     -F 'truck_id=1' \
-    -F 'load=1000' \
-    -F 'start_location_log=9.823311' \
-    -F 'start_location_lat=10.305816' \
-    -F 'end_location_log=9.773050' \
-    -F 'end_location_lat=10.256395' \
-    http://127.0.0.1:5000/api/fahrten
+    -F 'userId=321' \
+    -F 'currentLocationLon=11' \
+    -F 'currentLocationLat=11' \
+    -F 'homeLocationLon=10' \
+    -F 'homeLocationLat=10' \
+    -F 'payload=concret' \
+    -F 'maxLoad=1' \
+    -F 'angle=0' \
+    http://127.0.0.1:5000/api/trucks/1
     """
-    db = get_db()
-    db.execute(
-        'UPDATE trucks SET VALUES (NULL, ?, ?, ?, ?, ?, ?) WHERE id = ?',
-        (
-            request.form['truck_id'],
-            request.form['load'],
-            request.form['start_location_log'],
-            request.form['start_location_lat'],
-            request.form['end_location_log'],
-            request.form['end_location_lat'],
-            id
-        )
-    )
-    db.commit()
-
-    # Sync to Firebase
-
-    return
+    db = get_firebase_db()
+    data = {
+        "id": int(id),
+        "userId": int(request.form['userId']),
+        "currentLocationLon": float(request.form['currentLocationLon']),
+        "currentLocationLat": float(request.form['currentLocationLat']),
+        "homeLocationLon": float(request.form['homeLocationLon']),
+        "homeLocationLat": float(request.form['homeLocationLat']),
+        "createdAt": "2020-09-19-15-58-33", #str(datetime.datetime.now()),
+        "payload": request.form['payload'],
+        "maxLoad": int(request.form['maxLoad']),
+        "angle": int(request.form['angle'])
+    }
+    db.child("trucks/" + str(id)).update(data)
+    return jsonify([])
 
 
 @bp.route('/fahrten', methods=['GET'])
