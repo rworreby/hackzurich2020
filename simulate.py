@@ -59,19 +59,20 @@ def from_to(destination_IDs):
     return route, duration, payload
 
 
-def calc_pick_ups(indices, threshold = 0, alpha = 2):
+def calc_pick_ups(truck_id, threshold = 0, alpha = 2):
     db = get_firebase_db()
     pickups = db.child("pickups").get().val()
-    _, base_duration, _ = from_to(id_to_idx(indides[0]),id_to_idx(indides[1]))
+    base_route, base_duration, _ = from_to([id_to_idx(truck_id,"trucks"),id_to_idx(truck_id,"trucks")])
+    possible_pickups = list()
     for p in pickups:
-        route, duration, payload = from_to(id_to_idx(indides[0]),id_to_idx(p["id"]),id_to_idx(indices[1]))
+        route, duration, payload = from_to([id_to_idx(truck_id,"trucks"),id_to_idx(p["id"],"pickups"),id_to_idx(truck_id,"trucks")])
         if alpha*payload/duration > threshold:
-            possible_pickups.append((alpha*payload/duration,p["id"],route,duration))
-    best_pickup_factor, best_id, route, duration = max(possible_pickups,key=lambda pp: pp[0])
+            possible_pickups.append((alpha*payload/duration,p["id"],route,duration,p["locationLat"],p["locationLog"]))
+    best_pickup_factor, best_id, route, duration, best_lat, best_lon = max(possible_pickups,key=lambda pp: pp[0])
     if best_pickup_factor > threshold:
-        return best_id, route, duration
+        return best_id, route, duration, best_lat, best_lon
     else:
-        return None
+        return _, base_route, base_duration, False, False 
 
 
 def interpolate_route(route):
@@ -112,17 +113,17 @@ def main():
     # r = requests.delete('http://127.0.0.1:5000/api/trucks')
     r = requests.delete('http://127.0.0.1:5000/api/trucks')
 
-    r = requests.post('http://127.0.0.1:5000/api/trucks', data={
-        'userId': '321',
-        'currentLocationLon': 5.75766658782959,
-        'currentLocationLat': 5.67044448852539,
-        'homeLocationLon': 5.75766658782959,
-        'homeLocationLat': 5.67044448852539,
-        'payload': 'concret',
-        'maxLoad': '1',
-        'angle': '0',
-        'route': ''
-    })
+    # r = requests.post('http://127.0.0.1:5000/api/trucks', data={
+    #     'userId': '321',
+    #     'currentLocationLon': 5.75766658782959,
+    #     'currentLocationLat': 5.67044448852539,
+    #     'homeLocationLon': 5.75766658782959,
+    #     'homeLocationLat': 5.67044448852539,
+    #     'payload': 'concret',
+    #     'maxLoad': '1',
+    #     'angle': '0',
+    #     'route': ''
+    # })
 
     r = requests.post('http://127.0.0.1:5000/api/trucks', data={
         'userId': '321',
@@ -136,24 +137,24 @@ def main():
         'route': ''
     })
 
-    r = requests.post('http://127.0.0.1:5000/api/trucks', data={
-        'userId': '321',
-        'currentLocationLon': 11.4774446487427,
-        'currentLocationLat': 10.9261665344238,
-        'homeLocationLon': 11.4774446487427,
-        'homeLocationLat': 10.9261665344238,
-        'payload': 'concret',
-        'maxLoad': '1',
-        'angle': '0',
-        'route': ''
-    })
+    # r = requests.post('http://127.0.0.1:5000/api/trucks', data={
+    #     'userId': '321',
+    #     'currentLocationLon': 11.4774446487427,
+    #     'currentLocationLat': 10.9261665344238,
+    #     'homeLocationLon': 11.4774446487427,
+    #     'homeLocationLat': 10.9261665344238,
+    #     'payload': 'concret',
+    #     'maxLoad': '1',
+    #     'angle': '0',
+    #     'route': ''
+    # })
 
     from_tos = [
-        [0, 5],
+        # [0, 5],
         # [1, 6],
-        [1, 7],
+        [0, 7],
         # [2, 8],
-        [2, 9],
+        # [2, 9],
     ]
     routes = []
     durations = []
@@ -179,6 +180,8 @@ def main():
             'currentLocationLon': route[0][0],
             'currentLocationLat': route[0][1],
             'homeLocationLon': route[0][1],
+            'targetLocationLat': target_location[1],
+            'targetLocationLon': target_location[0],
             'homeLocationLat': route[0][0],
             'payload': 'concret',
             'maxLoad': '1',
@@ -197,6 +200,7 @@ def main():
             max_length = len(route)
 
     for i in range(max_length):
+        print(i)
         time.sleep(0.1)
 
         for j, truck in enumerate(trucks):
@@ -207,12 +211,22 @@ def main():
                     'currentLocationLat': routes[j][i][1],
                     'homeLocationLon': truck['homeLocationLon'],
                     'homeLocationLat': truck['homeLocationLat'],
+                    'targetLocationLat': truck['targetLocationLat'],
+                    'targetLocationLon': truck['targetLocationLon'],
                     'payload': truck['payload'],
                     'maxLoad': truck['maxLoad'],
                     'angle': 0, #angles[j][i],
-                    'route': json.dumps(routes[j])
+                    'route': truck['route']
                 })
-                truck = r.json()
+                # breakpoint()
+                try:
+                    truck =  json.loads(r.text)#r.json()
+                except:
+                    print(r.text)
+                    breakpoint()
+                if truck['route'] != json.dumps(routes[j]):
+                    # breakpoint()
+                    routes[j] = list(range(i)) + json.loads(truck['route'])
 
     return 0
 

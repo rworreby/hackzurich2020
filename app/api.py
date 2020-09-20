@@ -3,6 +3,7 @@ from flask import (
 )
 from app.firebase import get_firebase_db
 import datetime
+import json
 
 bp = Blueprint('api', __name__, url_prefix="/api")
 
@@ -89,17 +90,34 @@ def update_trucks(id):
         "currentLocationLat": float(request.form['currentLocationLat']),
         "homeLocationLon": float(request.form['homeLocationLon']),
         "homeLocationLat": float(request.form['homeLocationLat']),
+        "targetLocationLon": float(request.form['targetLocationLon']),
+        "targetLocationLat": float(request.form['targetLocationLat']),
         "createdAt": "2020-09-19-15-58-33", #str(datetime.datetime.now()),
         "payload": request.form['payload'],
         "maxLoad": int(request.form['maxLoad']),
         "angle": int(request.form['angle']),
         "route": str(request.form['route'])
     }
-    truck = db.child("trucks/" + str(id)).update(data)
-    return jsonify(truck)
 
     # If at goal?
     # check for new pick ups and get it
+    if (request.form['currentLocationLon'] == request.form['targetLocationLon'] and request.form['currentLocationLat'] == request.form['targetLocationLat']):
+        # find new pickup...
+        print("Start calculating ...")
+        from simulate import calc_pick_ups
+        pick_up_id, route, _, lat, lon = calc_pick_ups(id)
+        print("Calculation ended successfully.")
+        if lat:
+            data['route'] = json.dumps(route)
+            data['targetLocationLat'] = lat
+            data['targetLocationLon'] = lon
+
+    
+    truck = db.child("trucks/" + str(id)).update(data)
+    print(truck)
+    return jsonify(truck)
+
+  
 
     # if at pick up location -> delete pick up
 
