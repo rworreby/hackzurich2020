@@ -167,6 +167,8 @@ def main():
 
         # route = interpolate_route(route)
 
+        target_location = route[-1]
+
         route = route + route[::-1]
         # angle = angle_from_route(route)
 
@@ -210,6 +212,7 @@ def main():
                     'angle': 0, #angles[j][i],
                     'route': json.dumps(routes[j])
                 })
+                truck = r.json()
 
     return 0
 

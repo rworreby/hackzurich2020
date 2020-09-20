@@ -219,7 +219,7 @@ def create_pickup():
         "locationLat": float(request.form['latitude']),
         "payload": int(request.form['amount'])
     }
-    db.child("pickups/" + str(len(pickups))).set(data)
+    db.child("pickups/" + str(len(pickups) if pickups else 0)).set(data)
     return jsonify([])
 
 
