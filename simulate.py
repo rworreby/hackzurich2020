@@ -100,20 +100,19 @@ def main():
 
         # route = interpolate_route(route)
 
-        route = route + route[::-1]
+        # route = route + route[::-1]
 
         r = requests.post('http://127.0.0.1:5000/api/trucks', data={
             'userId': '321',
-            'currentLocationLon': route[0][1],
-            'currentLocationLat': route[0][0],
+            'currentLocationLon': route[0][0],
+            'currentLocationLat': route[0][1],
             'homeLocationLon': route[0][1],
             'homeLocationLat': route[0][0],
             'payload': 'concret',
             'maxLoad': '1',
-            'angle': '0'
+            'angle': '0',
+            'route': json.dumps(route)
         })
-
-        print(r.status_code)
 
         truck = r.json()
         routes.append(route)
@@ -132,13 +131,14 @@ def main():
             if i < len(routes[j]):
                 r = requests.put('http://127.0.0.1:5000/api/trucks/'+str(truck['id']), data={
                     'userId': truck['userId'],
-                    'currentLocationLon': routes[j][i][1],
-                    'currentLocationLat': routes[j][i][0],
+                    'currentLocationLon': routes[j][i][0],
+                    'currentLocationLat': routes[j][i][1],
                     'homeLocationLon': truck['homeLocationLon'],
                     'homeLocationLat': truck['homeLocationLat'],
                     'payload': truck['payload'],
                     'maxLoad': truck['maxLoad'],
-                    'angle': truck['angle']
+                    'angle': truck['angle'],
+                    'route': json.dumps(routes[j])
                 })
 
     return 0

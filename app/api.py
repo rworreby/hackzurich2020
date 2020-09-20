@@ -45,7 +45,8 @@ def create_trucks():
         "createdAt": str(datetime.datetime.now()),
         "payload": request.form['payload'],
         "maxLoad": int(request.form['maxLoad']),
-        "angle": int(request.form['angle'])
+        "angle": int(request.form['angle']),
+        "route": str(request.form['route'])
     }
     truck = db.child("trucks/" + str(len(trucks) if trucks else 0)).set(data)
     return jsonify(truck)
@@ -91,9 +92,16 @@ def update_trucks(id):
         "createdAt": "2020-09-19-15-58-33", #str(datetime.datetime.now()),
         "payload": request.form['payload'],
         "maxLoad": int(request.form['maxLoad']),
-        "angle": int(request.form['angle'])
+        "angle": int(request.form['angle']),
+        "route": str(request.form['route'])
     }
     db.child("trucks/" + str(id)).update(data)
+
+    # If at goal?
+    # check for new pick ups and get it
+
+    # if at pick up location -> delete pick up
+
     return jsonify([])
 
 @bp.route('/trucks', methods=['DELETE'])
