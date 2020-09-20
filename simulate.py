@@ -10,7 +10,7 @@ from testing import id_to_idx
 def create_get(coords, access_token = "pk.eyJ1IjoibXJmM2xpeCIsImEiOiJjazN5czZzNG0xM2h1M2twNjdydDdkYWxxIn0.erELJKvEEqZev409Z01L3g"):
     get_str = "https://api.mapbox.com/directions/v5/mapbox/driving/"
     for c in coords:
-        get_str += f"{c[0]}%2C{c[1]}%3B"
+        get_str += f"{c[1]}%2C{c[0]}%3B"
     return get_str[:-3] + f"?alternatives=false&geometries=geojson&steps=true&access_token={access_token}"
 
 
@@ -59,13 +59,14 @@ def from_to(destination_IDs):
     return route, duration, payload
 
 
-def calc_pick_ups(threshold = 0, alpha = 2):
-    pickup_ids = get_pickups() # Firebase magic happens here
-    _, base_duration, _ = from_to([1,5])
-    for pid in pickup_ids:
-        route, duration, payload = from_to([1,pid,5])
-        if 1/duration > threshold:
-            possible_pickups.append((alpha*payload/duration,pid,route,duration))
+def calc_pick_ups(indices, threshold = 0, alpha = 2):
+    db = get_firebase_db()
+    pickups = db.child("pickups").get().val()
+    _, base_duration, _ = from_to(id_to_idx(indides[0]),id_to_idx(indides[1]))
+    for p in pickups:
+        route, duration, payload = from_to(id_to_idx(indides[0]),id_to_idx(p["id"]),id_to_idx(indices[1]))
+        if alpha*payload/duration > threshold:
+            possible_pickups.append((alpha*payload/duration,p["id"],route,duration))
     best_pickup_factor, best_id, route, duration = max(possible_pickups,key=lambda pp: pp[0])
     if best_pickup_factor > threshold:
         return best_id, route, duration
@@ -90,30 +91,88 @@ def interpolate_route(route):
 
     return route
 
+
+def angle_from_route(route):
+    angle = []
+    for i in range(len(route) - 1):
+        vector_1 = [0, 1]
+        vector_2 = [
+            route[i][0] - route[i + 1][0],
+            route[i][1] - route[i + 1][1]
+        ]
+
+        unit_vector_1 = vector_1 / np.linalg.norm(vector_1)
+        unit_vector_2 = vector_2 / np.linalg.norm(vector_2)
+        dot_product = np.dot(unit_vector_1, unit_vector_2)
+        
+        angle.append(np.arccos(dot_product))
+    angle.append(np.arccos(dot_product))
+
 def main():
+    # r = requests.delete('http://127.0.0.1:5000/api/trucks')
     r = requests.delete('http://127.0.0.1:5000/api/trucks')
 
+    r = requests.post('http://127.0.0.1:5000/api/trucks', data={
+        'userId': '321',
+        'currentLocationLon': 5.75766658782959,
+        'currentLocationLat': 5.67044448852539,
+        'homeLocationLon': 5.75766658782959,
+        'homeLocationLat': 5.67044448852539,
+        'payload': 'concret',
+        'maxLoad': '1',
+        'angle': '0',
+        'route': ''
+    })
+
+    r = requests.post('http://127.0.0.1:5000/api/trucks', data={
+        'userId': '321',
+        'currentLocationLon': 11.4774446487427,
+        'currentLocationLat': 10.9261665344238,
+        'homeLocationLon': 11.4774446487427,
+        'homeLocationLat': 10.9261665344238,
+        'payload': 'concret',
+        'maxLoad': '1',
+        'angle': '0',
+        'route': ''
+    })
+
+    r = requests.post('http://127.0.0.1:5000/api/trucks', data={
+        'userId': '321',
+        'currentLocationLon': 11.4774446487427,
+        'currentLocationLat': 10.9261665344238,
+        'homeLocationLon': 11.4774446487427,
+        'homeLocationLat': 10.9261665344238,
+        'payload': 'concret',
+        'maxLoad': '1',
+        'angle': '0',
+        'route': ''
+    })
+
     from_tos = [
-        [1, 5],
+        [0, 5],
         # [1, 6],
-        [2, 7],
+        [1, 7],
         # [2, 8],
         [2, 9],
     ]
     routes = []
     durations = []
     trucks = []
+    # angles = []
 
-    for l in from_tos:
+    for i, l in enumerate(from_tos):
         route, duration, payload = from_to(l)
         # print(route, interpolate_route(route), sep="\n*********\n")
         # print(len(route), len(interpolate_route(route)))
 
         # route = interpolate_route(route)
 
-        # route = route + route[::-1]
+        route = route + route[::-1]
+        # angle = angle_from_route(route)
 
-        r = requests.post('http://127.0.0.1:5000/api/trucks', data={
+        # print(angle)
+
+        r = requests.put('http://127.0.0.1:5000/api/trucks/' + str(i), data={
             'userId': '321',
             'currentLocationLon': route[0][0],
             'currentLocationLat': route[0][1],
@@ -121,7 +180,7 @@ def main():
             'homeLocationLat': route[0][0],
             'payload': 'concret',
             'maxLoad': '1',
-            'angle': '0',
+            'angle': 0, #angle[0],
             'route': json.dumps(route)
         })
 
@@ -148,7 +207,7 @@ def main():
                     'homeLocationLat': truck['homeLocationLat'],
                     'payload': truck['payload'],
                     'maxLoad': truck['maxLoad'],
-                    'angle': truck['angle'],
+                    'angle': 0, #angles[j][i],
                     'route': json.dumps(routes[j])
                 })
 

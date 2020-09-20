@@ -95,7 +95,8 @@ def update_trucks(id):
         "angle": int(request.form['angle']),
         "route": str(request.form['route'])
     }
-    db.child("trucks/" + str(id)).update(data)
+    truck = db.child("trucks/" + str(id)).update(data)
+    return jsonify(truck)
 
     # If at goal?
     # check for new pick ups and get it

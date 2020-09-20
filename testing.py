@@ -1,5 +1,7 @@
 import requests
 import json
+from app.firebase import get_firebase_db
+
 
 def id_to_idx(id,key):
     if key == "facilities":
@@ -12,7 +14,7 @@ def id_to_idx(id,key):
         db = get_firebase_db()
         items = db.child("trucks").get().val()
 
-    for i in items:
+    for idx, i in enumerate(items):
         if i["id"] == id:
             return idx
     print(f"{key}-id {id} not found.")
