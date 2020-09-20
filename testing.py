@@ -1,6 +1,23 @@
 import requests
 import json
 
+def id_to_idx(id,key):
+    if key == "facilities":
+        db = get_firebase_db()
+        items = db.child("facilities").get().val()
+    elif key == "pickups":
+        db = get_firebase_db()
+        items = db.child("pickups").get().val()
+    else:
+        db = get_firebase_db()
+        items = db.child("trucks").get().val()
+
+    for i in items:
+        if i["id"] == id:
+            return idx
+    print(f"{key}-id {id} not found.")
+    return None
+
 def create_get(coords, access_token = "pk.eyJ1IjoibXJmM2xpeCIsImEiOiJjazN5czZzNG0xM2h1M2twNjdydDdkYWxxIn0.erELJKvEEqZev409Z01L3g"):
     get_str = "https://api.mapbox.com/directions/v5/mapbox/driving/"
     for c in coords:
@@ -24,7 +41,11 @@ def from_to(destination_IDs):
     coords = []
     payload = 0
     for i, d_id in enumerate(destination_IDs):
-        if i == 0 or i == len(destination_IDs)-1:
+        if i == 0:
+            lat = destinations['trucks'][d_id]['currentLocationLat']
+            long = destinations['trucks'][d_id]['currentLocationLon']
+            coords.append([lat, long])
+        elif i == len(destination_IDs)-1:
             lat = destinations['facilities'][d_id]['locationLat']
             long = destinations['facilities'][d_id]['locationLog']
             coords.append([lat, long])

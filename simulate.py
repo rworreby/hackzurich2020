@@ -4,6 +4,7 @@ from app.firebase import get_firebase_db
 import time
 import numpy as np
 from numpy import linalg as LA
+from testing import id_to_idx
 
 
 def create_get(coords, access_token = "pk.eyJ1IjoibXJmM2xpeCIsImEiOiJjazN5czZzNG0xM2h1M2twNjdydDdkYWxxIn0.erELJKvEEqZev409Z01L3g"):
@@ -32,17 +33,27 @@ def from_to(destination_IDs):
     db = get_firebase_db()
     pickups = db.child("pickups").get().val()
 
+    db = get_firebase_db()
+    trucks = db.child("trucks").get().val()
+
     coords = []
     payload = 0
     for i, d_id in enumerate(destination_IDs):
-        if i == 0 or i == len(destination_IDs)-1:
-            lat = facilities[d_id]['locationLat']
-            long = facilities[d_id]['locationLog']
+        if i == 0:
+            idx = id_to_idx(d_id,"facilities")
+            lat = trucks[idx]['currentLocationLat']
+            long = trucks[idx]['currentLocationLon']
+            coords.append([lat, long])
+        elif i == len(destination_IDs)-1:
+            idx = id_to_idx(d_id,"facilities")
+            lat = facilities[idx]['locationLat']
+            long = facilities[idx]['locationLog']
             coords.append([lat, long])
         else:
-            lat = pickups[d_id]['locationLat']
-            long = pickups[d_id]['locationLog']
-            payload += pickups[d_id]['payload']
+            idx = id_to_idx(d_id,"pickups")
+            lat = pickups[idx]['locationLat']
+            long = pickups[idx]['locationLog']
+            payload += pickups[idx]['payload']
             coords.append([lat, long])
     route, duration = mapbox_call(create_get(coords))
     return route, duration, payload
